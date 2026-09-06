@@ -210,6 +210,34 @@
   }
   body.vmode .vmode-hint { display: block; }
 
+  .duty-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FBF2DC;
+    border: 1.5px solid #C9A96A;
+    border-radius: 20px;
+    padding: 6px 14px;
+    margin-bottom: 10px;
+    width: fit-content;
+    flex-wrap: wrap;
+  }
+  .duty-tag .duty-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: #B0472E;
+    white-space: nowrap;
+  }
+  .duty-tag .duty-names {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4A3420;
+  }
+  @media (max-width: 480px) {
+    .duty-tag { padding: 5px 10px; }
+    .duty-tag .duty-title, .duty-tag .duty-names { font-size: 12px; }
+  }
+
   footer {
     margin-top: 24px;
     text-align: center;
@@ -234,11 +262,16 @@
     </div>
   </header>
 
+  <div class="duty-tag" id="dutyTag">
+    <span class="duty-title">👀 值日生</span>
+    <span class="duty-names" id="dutyNames"></span>
+  </div>
+
   <div class="tabs" id="tabs"></div>
   <div class="vmode-hint">👉 由右往左、由上往下閱讀，可左右滑動查看完整內容</div>
   <div id="panels"></div>
 
-  <footer>由 303 導師 Sia 每日更新．內容如有異動以老師口頭/BAND公告為準</footer>
+  <footer>由 303 導師思嘉 每日更新．內容如有異動以老師口頭/BAND公告為準</footer>
 </div>
 
 <script>
@@ -292,6 +325,18 @@ const tabsEl = document.getElementById('tabs');
 const panelsEl = document.getElementById('panels');
 // （已移除頂部更新時間顯示）
 
+// 值日生輪值：6組，每組顧一整週，第N週對應第N組（超過6週則循環）
+const DUTY_GROUPS = [
+  ['李帛紘', '林佑樂', '李容碩', '張博扉'],
+  ['彭梓博', '陳冠昕', '鄭禹炫', '黃嘉誠'],
+  ['賴垣聿', '鍾睿恩', '陳禹僑', '潘子熙'],
+  ['彭芷柔', '劉芮彤', '朱沛潔', '詹若亞'],
+  ['林莉',   '何蕓希', '陳宇甯', '簡宛愉'],
+  ['鄭妮菈', '黃靖儒', '陳馨儀', '林羽晴'],
+];
+const dutyIdx = (WEEK_NUMBER - 1) % DUTY_GROUPS.length;
+document.getElementById('dutyNames').textContent = DUTY_GROUPS[dutyIdx].join('、');
+
 function combinedList(d) {
   const items = [];
   [d.homework, d.exam, d.bring, d.reminder].forEach(field => {
@@ -303,42 +348,4 @@ function combinedList(d) {
   });
 
   if (items.length === 0) {
-    return `<div class="section-body empty">今天沒有喔</div>`;
-  }
-  return `<div class="section-body">` +
-    items.map((line, i) => `${i + 1}. ${line}`).join('\n\n') +
-    `</div>`;
-}
-
-WEEK_DATA.forEach((d, i) => {
-  const tab = document.createElement('div');
-  tab.className = 'tab' + (i === 0 ? ' active' : '');
-  tab.innerHTML = `週${d.label}<span class="day-date">W${WEEK_NUMBER}｜${d.date}</span>`;
-  tab.onclick = () => switchDay(i);
-  tabsEl.appendChild(tab);
-
-  const panel = document.createElement('div');
-  panel.className = 'day-panel' + (i === 0 ? ' active' : '');
-  panel.innerHTML = `
-    <div class="card">
-      ${combinedList(d)}
-    </div>
-    ${d.announce && d.announce.trim() ? `<div class="announce">📣 ${d.announce}</div>` : ''}
-  `;
-  panelsEl.appendChild(panel);
-});
-
-function switchDay(idx) {
-  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-  document.querySelectorAll('.day-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
-}
-
-document.getElementById('vmodeBtn').onclick = (e) => {
-  const on = document.body.classList.toggle('vmode');
-  e.target.classList.toggle('active', on);
-};
-
-
-</script>
-</body>
-</html>
+    return `<div class="section-body empty">今天沒有喔</div>`
