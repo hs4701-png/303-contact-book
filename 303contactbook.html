@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>303 班級聯絡簿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+
+  :root {
+    --paper: #FBF7EF;
+    --line: #DAD3C0;
+    --ink: #2D3A5C;
+    --ink-soft: #6B7280;
+    --coral: #FF8B5E;
+    --sage: #7FA890;
+    --card: #FFFFFF;
+    --board: #1F3A2E;
+    --board-dark: #16281F;
+    --wood: #7A4B2C;
+    --wood-dark: #5C3720;
+    --chalk: #F3F0E4;
+    --chalk-yellow: #FFE28A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--paper);
+    background-image: repeating-linear-gradient(180deg, transparent 0 34px, var(--line) 34px 35px);
+    min-height: 100vh;
+    color: var(--ink);
+    padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .vmode-btn {
+    background: var(--card);
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--ink);
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+  .vmode-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  h1 {
+    font-size: 46px;
+    margin: 0;
+    font-weight: 900;
+  }
+  h1 span.tag {
+    font-family: 'Klee One', 'Noto Sans TC', sans-serif;
+    color: var(--coral);
+  }
+  .updated { font-size: 15px; color: var(--ink-soft); }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .tab {
+    flex-shrink: 0;
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    padding: 12px 20px 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 19px;
+    color: var(--ink-soft);
+    position: relative;
+    top: 2px;
+  }
+  .tab.active {
+    color: var(--ink);
+    border-color: var(--ink);
+    background: var(--card);
+    top: 0;
+    box-shadow: 0 -2px 0 var(--coral) inset;
+  }
+  .tab .day-date { display: block; font-size: 15px; font-weight: 400; margin-top: 2px; }
+
+  .day-panel { display: none; }
+  .day-panel.active { display: block; animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* 黑板造型：木框 + 板面 */
+  .card {
+    background:
+      radial-gradient(ellipse at 20% 15%, rgba(255,255,255,0.05), transparent 55%),
+      radial-gradient(ellipse at 80% 85%, rgba(255,255,255,0.04), transparent 55%),
+      linear-gradient(160deg, var(--board) 0%, var(--board-dark) 100%);
+    border: 14px solid var(--wood);
+    border-radius: 10px;
+    box-shadow:
+      inset 0 0 0 3px var(--wood-dark),
+      inset 0 2px 14px rgba(0,0,0,0.5),
+      0 10px 22px rgba(60,40,20,0.25);
+    padding: 26px 24px;
+    margin-bottom: 14px;
+    color: var(--chalk);
+  }
+  .section { margin-bottom: 22px; }
+  .section:last-child { margin-bottom: 0; }
+  .section-label {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--chalk-yellow);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-shadow: 0 0 6px rgba(255,226,138,0.25);
+  }
+  .section-body {
+    font-size: 28px;
+    line-height: 2.5;
+    white-space: pre-line;
+    text-shadow: 0 0 3px rgba(255,255,255,0.15);
+  }
+  .section-body.empty { color: #B9C4BC; font-style: italic; text-shadow: none; }
+
+  ruby { ruby-position: over; margin: 0 4px; }
+  rt {
+    font-size: 0.48em;
+    color: var(--chalk-yellow);
+    font-weight: 600;
+    user-select: none;
+    letter-spacing: 0;
+  }
+  body.no-zhuyin rt { display: none; }
+  rt { display: none; }
+  body.vmode ruby { ruby-position: right; margin: 3px 0; }
+
+  .announce {
+    background: rgba(255,226,138,0.12);
+    border: 2px dashed var(--chalk-yellow);
+    color: var(--chalk);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 21px;
+    line-height: 1.7;
+  }
+
+  /* 直式抄寫模式 */
+  body.vmode .card {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    height: 65vh;
+    max-height: 620px;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: block;
+  }
+  body.vmode .section {
+    margin-bottom: 0;
+    margin-right: 30px;
+    display: inline-block;
+    vertical-align: top;
+    height: 100%;
+  }
+  body.vmode .section-label {
+    writing-mode: vertical-rl;
+    margin-bottom: 0;
+    margin-right: 8px;
+  }
+  body.vmode .section-body {
+    font-size: 30px;
+    line-height: 2.7;
+    letter-spacing: 2px;
+  }
+  body.vmode .announce {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    height: 220px;
+  }
+  .vmode-hint {
+    display: none;
+    text-align: center;
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin: -6px 0 12px;
+  }
+  body.vmode .vmode-hint { display: block; }
+
+  .duty-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FBF2DC;
+    border: 1.5px solid #C9A96A;
+    border-radius: 20px;
+    padding: 6px 14px;
+    margin-bottom: 10px;
+    width: fit-content;
+    flex-wrap: wrap;
+  }
+  .duty-tag .duty-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: #B0472E;
+    white-space: nowrap;
+  }
+  .duty-tag .duty-names {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4A3420;
+  }
+  @media (max-width: 480px) {
+    .duty-tag { padding: 5px 10px; }
+    .duty-tag .duty-title, .duty-tag .duty-names { font-size: 12px; }
+  }
+
+  footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 480px) {
+    .tab { padding: 10px 16px 8px; font-size: 17px; }
+    h1 { font-size: 32px; }
+    .section-body { font-size: 26px; }
+    .card { padding: 20px 16px; border-width: 10px; }
+  }
+
+  /* 歷史紀錄彈窗 */
+  .history-overlay {
+    position: fixed; inset: 0;
+    background: rgba(45,58,92,0.45);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 60;
+  }
+  .history-overlay.show { display: flex; }
+  .history-sheet {
+    background: var(--paper);
+    width: 100%;
+    max-width: 560px;
+    border-radius: 20px 20px 0 0;
+    padding: 22px 20px 30px;
+    max-height: 86vh;
+    overflow-y: auto;
+    animation: histUp .18s ease;
+  }
+  @keyframes histUp { from { transform: translateY(24px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+  .history-sheet-inner { position: relative; }
+  .history-close {
+    position: absolute; top: 0; right: 0;
+    background: none; border: none; font-size: 20px;
+    color: var(--ink-soft); cursor: pointer;
+  }
+  .history-title {
+    font-size: 21px;
+    margin: 0 0 2px;
+    font-weight: 900;
+  }
+  .history-sub {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+  .history-week-btn {
+    width: 100%;
+    text-align: left;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .history-week-btn .saved-at {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ink-soft);
+  }
+  .history-empty {
+    padding: 30px 4px;
+    color: var(--ink-soft);
+    font-size: 14px;
+    text-align: center;
+  }
+  .history-back {
+    background: none;
+    border: none;
+    color: var(--coral);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0 0 12px;
+  }
+  .history-day-block {
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .history-day-block .hd-label {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .history-day-block .hd-line {
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-line;
+    color: var(--ink);
+  }
+  .history-day-block .hd-empty {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>303<span class="tag"> 班級聯絡簿</span></h1>
+    <div class="header-right">
+      <button class="vmode-btn" id="historyBtn">📚 歷史紀錄</button>
+      <button class="vmode-btn" id="vmodeBtn">✍️ 直式抄寫模式</button>
+    </div>
+  </header>
+
+  <div class="duty-tag" id="dutyTag">
+    <span class="duty-title">👀 值日生</span>
+    <span class="duty-names" id="dutyNames"></span>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="vmode-hint">👉 由右往左、由上往下閱讀，可左右滑動查看完整內容</div>
+  <div id="panels"></div>
+
+  <footer>由 303 導師思嘉 每日更新．內容如有異動以老師口頭/BAND公告為準</footer>
+</div>
+
+<div class="history-overlay" id="historyOverlay">
+  <div class="history-sheet">
+    <div class="history-sheet-inner">
+      <button class="history-close" id="historyClose">✕</button>
+      <h2 class="history-title">📚 歷史紀錄</h2>
+      <div class="history-sub">自動保存每次更新過的週別（存在這台裝置的瀏覽器裡）</div>
+      <div id="historyList"></div>
+      <div id="historyDetail"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ⚠️ 這是示範用的一週資料，實際使用時老師會逐日更新這裡的內容
+const WEEK_NUMBER = 2;
+const WEEK_DATA = [
+  {
+    label: '一', date: '9/7',
+    homework: 'L1國習\n數習12.13',
+    exam: '修辭(　　)',
+    bring: '帶彩色筆或蠟筆',
+    reminder: '',
+    announce: ''
+  },
+  {
+    label: '二', date: '9/8',
+    homework: 'L1國練\n預習L2\n數練3',
+    exam: '',
+    bring: '',
+    reminder: '',
+    announce: ''
+  },
+  {
+    label: '三', date: '9/9',
+    homework: 'L2乙本生字9個×3\n數練4',
+    exam: '',
+    bring: '帶直笛',
+    reminder: '',
+    announce: ''
+  },
+  {
+    label: '四', date: '9/10',
+    homework: 'L2乙本(完)\n數練5.6',
+    exam: '字音字形(　　)',
+    bring: '',
+    reminder: '',
+    announce: ''
+  },
+  {
+    label: '五', date: '9/11',
+    homework: 'L2造詞\n數習14.15\n閱讀',
+    exam: '成語(　　)',
+    bring: '',
+    reminder: '',
+    announce: ''
+  },
+];
+const LAST_UPDATED = '2026/09/06 已更新';
+
+const tabsEl = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+// （已移除頂部更新時間顯示）
+
+// 值日生輪值：6組，每組顧一整週，第N週對應第N組（超過6週則循環）
+const DUTY_GROUPS = [
+  ['李帛紘', '林佑樂', '李容碩', '張博扉'],
+  ['彭梓博', '陳冠昕', '鄭禹炫', '黃嘉誠'],
+  ['賴垣聿', '鍾睿恩', '陳禹僑', '潘子熙'],
+  ['彭芷柔', '劉芮彤', '朱沛潔', '詹若亞'],
+  ['林莉',   '何蕓希', '陳宇甯', '簡宛愉'],
+  ['鄭妮菈', '黃靖儒', '陳馨儀', '林羽晴'],
+];
+const dutyIdx = (WEEK_NUMBER - 1) % DUTY_GROUPS.length;
+document.getElementById('dutyNames').textContent = DUTY_GROUPS[dutyIdx].join('、');
+
+function combinedList(d) {
+  const items = [];
+  [d.homework, d.exam, d.bring, d.reminder].forEach(field => {
+    if (field && field.trim()) {
+      field.split('\n').forEach(line => {
+        if (line.trim()) items.push(line.trim());
+      });
+    }
+  });
+
+  if (items.length === 0) {
+    return `<div class="section-body empty">今天沒有喔</div>`;
+  }
+  return `<div class="section-body">` +
+    items.map((line, i) => `${i + 1}. ${line}`).join('\n\n') +
+    `</div>`;
+}
+
+WEEK_DATA.forEach((d, i) => {
+  const tab = document.createElement('div');
+  tab.className = 'tab' + (i === 0 ? ' active' : '');
+  tab.innerHTML = `週${d.label}<span class="day-date">W${WEEK_NUMBER}｜${d.date}</span>`;
+  tab.onclick = () => switchDay(i);
+  tabsEl.appendChild(tab);
+
+  const panel = document.createElement('div');
+  panel.className = 'day-panel' + (i === 0 ? ' active' : '');
+  panel.innerHTML = `
+    <div class="card">
+      ${combinedList(d)}
+    </div>
+    ${d.announce && d.announce.trim() ? `<div class="announce">📣 ${d.announce}</div>` : ''}
+  `;
+  panelsEl.appendChild(panel);
+});
+
+function switchDay(idx) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.querySelectorAll('.day-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+}
+
+document.getElementById('vmodeBtn').onclick = (e) => {
+  const on = document.body.classList.toggle('vmode');
+  e.target.classList.toggle('active', on);
+};
+
+// ===== 歷史紀錄：每次開啟頁面時，自動把目前這週的資料存進 localStorage =====
+const HISTORY_KEY = 'contact-book-303-history';
+
+function saveCurrentWeekToHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    const history = raw ? JSON.parse(raw) : {};
+    history[WEEK_NUMBER] = {
+      weekNumber: WEEK_NUMBER,
+      days: WEEK_DATA,
+      savedAt: new Date().toLocaleString('zh-TW')
+    };
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch (e) {
+    console.log('歷史紀錄儲存失敗（此瀏覽器可能不支援本機儲存）');
+  }
+}
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function renderHistoryList() {
+  const history = loadHistory();
+  const weeks = Object.values(history).sort((a, b) => b.weekNumber - a.weekNumber);
+  const listEl = document.getElementById('historyList');
+  document.getElementById('historyDetail').innerHTML = '';
+  if (!weeks.length) {
+    listEl.innerHTML = '<div class="history-empty">目前還沒有存到歷史紀錄喔<br>（下次更新完新一週資料、重新整理頁面後就會開始累積）</div>';
+    return;
+  }
+  listEl.innerHTML = weeks.map(w => {
+    const dateRange = w.days && w.days.length ? `${w.days[0].date} ～ ${w.days[w.days.length - 1].date}` : '';
+    const isCurrent = w.weekNumber === WEEK_NUMBER;
+    return `<button class="history-week-btn" data-week="${w.weekNumber}">
+      <span>第 ${w.weekNumber} 週　${dateRange}${isCurrent ? '（本週）' : ''}</span>
+      <span class="saved-at">${w.savedAt}</span>
+    </button>`;
+  }).join('');
+  listEl.querySelectorAll('.history-week-btn').forEach(btn => {
+    btn.onclick = () => renderHistoryDetail(parseInt(btn.dataset.week));
+  });
+}
+
+function renderHistoryDetail(weekNumber) {
+  const history = loadHistory();
+  const w = history[weekNumber];
+  if (!w) return;
+  document.getElementById('historyList').innerHTML = '';
+  const detailEl = document.getElementById('historyDetail');
+  const blocks = w.days.map(d => {
+    const items = [];
+    [d.homework, d.exam, d.bring, d.reminder].forEach(field => {
+      if (field && field.trim()) {
+        field.split('\n').forEach(line => { if (line.trim()) items.push(line.trim()); });
+      }
+    });
+    const body = items.length
+      ? `<div class="hd-line">${items.map((line, i) => `${i + 1}. ${line}`).join('\n')}</div>`
+      : `<div class="hd-empty">當天沒有紀錄</div>`;
+    const announce = d.announce && d.announce.trim() ? `<div class="hd-line">📣 ${d.announce}</div>` : '';
+    return `<div class="history-day-block">
+      <div class="hd-label">週${d.label}　${d.date}</div>
+      ${body}
+      ${announce}
+    </div>`;
+  }).join('');
+  detailEl.innerHTML = `
+    <button class="history-back" id="historyBackBtn">← 回到週別列表</button>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:10px;">存檔時間：${w.savedAt}</div>
+    ${blocks}
+  `;
+  document.getElementById('historyBackBtn').onclick = renderHistoryList;
+}
+
+document.getElementById('historyBtn').onclick = () => {
+  renderHistoryList();
+  document.getElementById('historyOverlay').classList.add('show');
+};
+document.getElementById('historyClose').onclick = () => {
+  document.getElementById('historyOverlay').classList.remove('show');
+};
+document.getElementById('historyOverlay').onclick = (e) => {
+  if (e.target.id === 'historyOverlay') e.target.classList.remove('show');
+};
+
+saveCurrentWeekToHistory();
+
+
+</script>
+</body>
+</html>
